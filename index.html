@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Reelz</title>
+<title>Camino Reel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -31,6 +31,8 @@
     font-family:'Inter', system-ui, sans-serif;
     min-height:100%;
     -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
   }
   h1,h2,h3{font-family:'Fraunces', serif; font-weight:600; margin:0 0 6px;}
   .wrap{max-width:520px; margin:0 auto; padding:20px 18px 60px;}
@@ -158,8 +160,8 @@
   <div class="stamp-row">
     <div class="stamp">✕</div>
     <div>
-      <h1 style="font-size:22px;">Reelz</h1>
-      <div class="eyebrow">turn a bunch of photos into one video</div>
+      <h1 style="font-size:22px;">Camino Reel</h1>
+      <div class="eyebrow">turn two weeks of photos into one video</div>
     </div>
   </div>
 
@@ -213,6 +215,12 @@
     <div class="card">
       <h2 style="font-size:17px;">What do you want to make?</h2>
       <p id="choiceSummary"></p>
+
+      <label style="display:flex; align-items:center; gap:10px; margin-bottom:18px; font-size:14px; font-weight:600; cursor:pointer;">
+        <input type="checkbox" id="metaToggle" checked style="width:18px; height:18px; accent-color:var(--ochre-deep);">
+        Show date on gallery pictures
+      </label>
+
       <button class="btn" id="chooseVideoBtn" style="margin-bottom:10px;">Video reel — for social media</button>
       <button class="btn secondary" id="chooseGalleryBtn">Web gallery — a clickable page of photos</button>
     </div>
@@ -899,18 +907,27 @@
       $('#galleryBuildStatus').textContent = `Preparing images and ${videoCount} videos — with this many videos the saved file will be large and slow to send. Photos only would keep it light.`;
     }
 
+    const includeMeta = $('#metaToggle') && $('#metaToggle').checked;
     const cells = [];
     let done = 0;
+    
     for(const item of state.keepers){
+      // Format the date 
+      let metaText = '';
+      if(includeMeta && item.file.lastModified) {
+        const d = new Date(item.file.lastModified);
+        metaText = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      }
+
       if(item.type === 'image'){
         const full = compressImageToDataURL(item.el, 1600, 0.82);
         const thumb = compressImageToDataURL(item.el, 480, 0.7);
-        cells.push({type:'image', full, thumb});
+        cells.push({type:'image', full, thumb, metaText});
       } else {
         const poster = videoPosterDataURL(item.el, 480);
         let videoData = null;
         try{ videoData = await fileToDataURL(item.file); }catch(e){ /* skip if unreadable */ }
-        cells.push({type:'video', poster, videoData, mime:item.file.type||'video/mp4'});
+        cells.push({type:'video', poster, videoData, mime:item.file.type||'video/mp4', metaText});
       }
       done++;
       $('#galleryProgress').style.width = Math.round(done/state.keepers.length*100)+'%';
@@ -936,31 +953,48 @@
     }).join('\n');
 
     const lightboxData = cells.map(c=>{
-      if(c.type==='image') return {type:'image', src:c.full};
-      return {type:'video', src:c.videoData, mime:c.mime, poster:c.poster};
+      if(c.type==='image') return {type:'image', src:c.full, metaText:c.metaText};
+      return {type:'video', src:c.videoData, mime:c.mime, poster:c.poster, metaText:c.metaText};
     });
 
     return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8">
+<!-- Removed maximum-scale so pinch-to-zoom works perfectly -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Camino Gallery</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;}
-  body{margin:0; background:#eee3ce; font-family:'Inter',sans-serif; color:#3a2f24;}
+  body{margin:0; background:#eee3ce; font-family:'Inter',sans-serif; color:#3a2f24; touch-action: pan-y pinch-zoom;}
   h1{font-family:'Fraunces',serif; font-size:22px; text-align:center; padding:24px 16px 4px;}
   .sub{text-align:center; color:#6b5c48; font-size:13px; padding-bottom:18px;}
   .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:6px; padding:0 8px 40px;}
   .g-cell{position:relative; aspect-ratio:1; overflow:hidden; border-radius:8px; cursor:pointer; background:#111;}
   .g-cell img{width:100%; height:100%; object-fit:cover; display:block;}
   .g-play{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; background:rgba(0,0,0,0.15);}
-  #lightbox{position:fixed; inset:0; background:rgba(20,15,10,0.95); display:none; align-items:center; justify-content:center; z-index:10; flex-direction:column;}
+  #lightbox{position:fixed; inset:0; background:rgba(15,12,10,0.98); display:none; align-items:center; justify-content:center; z-index:10; flex-direction:column;}
   #lightbox.open{display:flex;}
-  #lightbox img, #lightbox video{max-width:94vw; max-height:80vh; border-radius:6px;}
-  .lb-nav{position:absolute; top:0; bottom:0; width:25%; display:flex; align-items:center; font-size:32px; color:rgba(255,255,255,0.5); cursor:pointer;}
-  .lb-prev{left:0; justify-content:flex-start; padding-left:12px;}
-  .lb-next{right:0; justify-content:flex-end; padding-right:12px;}
-  .lb-close{position:absolute; top:16px; right:18px; color:#fff; font-size:26px; cursor:pointer;}
+  
+  /* Changed to full screen edge-to-edge */
+  #lightbox img, #lightbox video{max-width:100vw; max-height:100vh; border-radius:0; object-fit:contain; width:100%; height:100%;}
+  
+  .lb-close{position:absolute; top:20px; right:20px; color:#fff; font-size:28px; font-weight:bold; cursor:pointer; z-index:20; background:rgba(0,0,0,0.3); width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:50%;}
+  
+  /* Smart contrast text shadow */
+  .lb-meta {
+    position: absolute;
+    bottom: 30px;
+    left: 0; 
+    width: 100%;
+    text-align: center;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+    z-index: 20;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.7), 0 0 4px rgba(0,0,0,0.8);
+  }
 </style></head>
 <body>
 <h1>The Camino</h1>
@@ -969,30 +1003,53 @@
 
 <div id="lightbox">
   <div class="lb-close" onclick="closeLightbox()">✕</div>
-  <div class="lb-nav lb-prev" onclick="navLightbox(-1)">‹</div>
-  <div class="lb-nav lb-next" onclick="navLightbox(1)">›</div>
-  <div id="lbContent"></div>
+  <div id="lbContent" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
+  <div id="lbMeta" class="lb-meta"></div>
 </div>
 
 <script>
   const data = ${JSON.stringify(lightboxData)};
   let idx = 0;
+  let startX = 0;
+
   function openLightbox(i){
     idx = i;
     renderLB();
     document.getElementById('lightbox').classList.add('open');
   }
-  function closeLightbox(){ document.getElementById('lightbox').classList.remove('open'); }
-  function navLightbox(dir){ idx = (idx + dir + data.length) % data.length; renderLB(); }
+  
+  function closeLightbox(){ 
+    document.getElementById('lightbox').classList.remove('open'); 
+    document.getElementById('lbContent').innerHTML = ''; // stops video playing
+  }
+  
+  function navLightbox(dir){ 
+    idx = (idx + dir + data.length) % data.length; 
+    renderLB(); 
+  }
+  
   function renderLB(){
     const item = data[idx];
     const el = document.getElementById('lbContent');
     if(item.type==='image'){
       el.innerHTML = '<img src="'+item.src+'">';
     } else {
-      el.innerHTML = item.src ? '<video src="'+item.src+'" poster="'+item.poster+'" controls playsinline autoplay></video>' : '<img src="'+item.poster+'">';
+      el.innerHTML = item.src ? '<video src="'+item.src+'" poster="'+item.poster+'" controls playsinline autoplay loop></video>' : '<img src="'+item.poster+'">';
     }
+    document.getElementById('lbMeta').textContent = item.metaText || '';
   }
+
+  // Swipe logic
+  const lb = document.getElementById('lightbox');
+  lb.addEventListener('touchstart', e => { 
+    startX = e.touches[0].clientX; 
+  });
+  lb.addEventListener('touchend', e => {
+    const endX = e.changedTouches[0].clientX;
+    const diff = startX - endX;
+    if(diff > 60) navLightbox(1);      // Swiped left, go next
+    else if(diff < -60) navLightbox(-1); // Swiped right, go back
+  });
 <\/script>
 </body></html>`;
   }
