@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Reeler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#eee3ce;
+    --paper-deep:#e3d5b8;
+    --ink:#3a2f24;
+    --ink-soft:#6b5c48;
+    --ochre:#c8912e;
+    --ochre-deep:#a9741c;
+    --rust:#a24d2c;
+    --line:#c9b892;
+    --good:#5b7a52;
+    --bad:#a24d2c;
+    --card-shadow: 0 10px 24px rgba(58,47,36,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:
+      radial-gradient(circle at 15% 8%, rgba(200,145,46,0.10), transparent 45%),
+      radial-gradient(circle at 85% 92%, rgba(162,77,44,0.10), transparent 45%),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Inter', system-ui, sans-serif;
+    min-height:100%;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  h1,h2,h3{font-family:'Fraunces', serif; font-weight:600; margin:0 0 6px;}
+  .wrap{max-width:520px; margin:0 auto; padding:20px 18px 60px;}
+  .stamp-row{display:flex; align-items:center; gap:10px; margin-bottom:22px;}
+  .stamp{
+    width:38px;height:38px;border-radius:50%;
+    border:2px dashed var(--ochre-deep);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif; font-weight:600; color:var(--ochre-deep); font-size:15px;
+    flex-shrink:0;
+  }
+  .eyebrow{font-size:13px; color:var(--ink-soft); letter-spacing:0.02em;}
+  .step{display:none;}
+  .step.active{display:block; animation: rise 0.35s ease;}
+  @keyframes rise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+  .card{
+    background:#fbf6ea;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px;
+    box-shadow: var(--card-shadow);
+    margin-bottom:16px;
+  }
+  p{line-height:1.5; color:var(--ink-soft); font-size:15px;}
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--ochre-deep); color:#fdf8ec; border:none;
+    padding:14px 22px; border-radius:10px; font-size:16px; font-weight:600;
+    font-family:'Inter',sans-serif; cursor:pointer; width:100%;
+    transition: transform 0.12s ease, background 0.15s ease;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn:disabled{background:#c9b892; cursor:not-allowed;}
+  .btn.secondary{background:transparent; color:var(--ink); border:1.5px solid var(--line);}
+  .btn.ghost{background:transparent; color:var(--ink-soft); font-weight:500; padding:10px;}
+  .btn-row{display:flex; gap:10px;}
+  .btn-row .btn{width:auto; flex:1;}
+
+  input[type=file]{display:none;}
+  .drop{
+    display:block; 
+    border:2px dashed var(--ochre-deep); border-radius:14px; padding:38px 18px;
+    text-align:center; cursor:pointer; background:rgba(200,145,46,0.06);
+  }
+  .drop:active{background:rgba(200,145,46,0.14);}
+  .drop .big{font-size:34px; margin-bottom:6px;}
+
+  .progress-track{background:var(--paper-deep); border-radius:8px; height:10px; overflow:hidden; margin:14px 0;}
+  .progress-fill{background:var(--ochre-deep); height:100%; width:0%; transition:width 0.2s ease;}
+
+  .chip-grid{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;}
+  .chip{
+    position:relative; width:64px; height:64px; border-radius:8px; overflow:hidden;
+    border:1px solid var(--line); background:var(--paper-deep);
+  }
+  .chip img, .chip video{width:100%; height:100%; object-fit:cover; display:block;}
+  .chip .restore{
+    position:absolute; inset:0; background:rgba(58,47,36,0.55); color:#fdf8ec;
+    display:flex; align-items:center; justify-content:center; font-size:11px; text-align:center;
+    opacity:0; transition:opacity 0.15s;
+  }
+  .chip:active .restore{opacity:1;}
+
+  .stack{position:relative; height:64vh; max-height:520px; margin-bottom:14px;}
+  .swipe-card{
+    position:absolute; inset:0; border-radius:16px; overflow:hidden;
+    background:#111; box-shadow: var(--card-shadow); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    touch-action:none; user-select:none;
+  }
+  .swipe-card img, .swipe-card video{width:100%; height:100%; object-fit:contain; background:#1c1712;}
+  .swipe-card .badge{
+    position:absolute; top:14px; padding:6px 14px; border-radius:20px; font-weight:600;
+    font-size:14px; opacity:0; transition:opacity 0.1s; font-family:'Fraunces',serif;
+  }
+  .badge.keep{right:14px; background:rgba(91,122,82,0.9); color:#fff;}
+  .badge.skip{left:14px; background:rgba(162,77,44,0.9); color:#fff;}
+  .swipe-count{text-align:center; color:var(--ink-soft); font-size:13px; margin-bottom:10px;}
+
+  .swipe-actions{display:flex; justify-content:center; gap:22px; margin-top:6px;}
+  .round-btn{
+    width:58px; height:58px; border-radius:50%; border:none; font-size:24px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    box-shadow: var(--card-shadow);
+  }
+  .round-btn.skip{background:#fbf6ea; color:var(--rust); border:2px solid var(--rust);}
+  .round-btn.keep{background:var(--good); color:#fff;}
+
+  label.field-label{display:block; font-size:13px; font-weight:600; color:var(--ink-soft); margin-bottom:6px; margin-top:16px;}
+  input[type=range]{width:100%; accent-color:var(--ochre-deep);}
+  input[type=text]{width:100%; padding:12px; border-radius:10px; border:1.5px solid var(--line); font-family:'Inter', sans-serif; font-size:16px; outline:none; background:#fbf6ea; color:var(--ink); margin-bottom:16px;}
+  input[type=text]:focus{border-color:var(--ochre-deep);}
+  
+  .pace-row{display:flex; gap:8px;}
+  .pace-opt{
+    flex:1; text-align:center; padding:10px 6px; border-radius:10px; border:1.5px solid var(--line);
+    cursor:pointer; font-size:13px; font-weight:600; color:var(--ink-soft);
+  }
+  .pace-opt.selected{border-color:var(--ochre-deep); background:rgba(200,145,46,0.12); color:var(--ochre-deep);}
+
+  .music-opt{
+    display:flex; align-items:center; justify-content:space-between; padding:12px 14px;
+    border:1.5px solid var(--line); border-radius:10px; margin-bottom:8px; cursor:pointer;
+  }
+  .music-opt.selected{border-color:var(--ochre-deep); background:rgba(200,145,46,0.12);}
+  .music-opt .play-mini{
+    width:32px;height:32px;border-radius:50%; border:1px solid var(--line); background:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;
+  }
+  .music-opt .status{font-size:11px; color:var(--ink-soft);}
+  .music-opt .status.ok{color:var(--good); font-weight:600;}
+  .music-opt .status.missing{color:var(--bad); font-weight:600;}
+
+  .estimate{
+    text-align:center; font-family:'Fraunces',serif; font-size:26px; color:var(--ochre-deep);
+    margin:14px 0 4px;
+  }
+  .estimate-label{text-align:center; font-size:12px; color:var(--ink-soft); margin-bottom:10px;}
+
+  #renderCanvas{display:none;}
+  video#previewPlayer{width:100%; border-radius:12px; margin-top:10px; background:#000;}
+
+  .footer-note{font-size:12px; color:var(--ink-soft); text-align:center; margin-top:14px; line-height:1.5;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="stamp-row">
+    <div class="stamp">✕</div>
+    <div>
+      <h1 style="font-size:22px;">Reeler</h1>
+      <div class="eyebrow">turn a bunch of photos into one video</div>
+    </div>
+  </div>
+
+  <!-- RESUME PREVIOUS SESSION -->
+  <div class="step" id="step-resume">
+    <div class="card">
+      <h2 style="font-size:17px;">Pick up where you left off?</h2>
+      <p id="resumeSummary">You've got photos saved from a session that didn't finish.</p>
+      <button class="btn" id="resumeBtn" style="margin-bottom:10px;">Resume that session</button>
+      <button class="btn secondary" id="discardResumeBtn">Start fresh (delete saved session)</button>
+    </div>
+  </div>
+
+  <!-- STEP 1: UPLOAD -->
+  <div class="step active" id="step-upload">
+    <div class="card">
+      <h2 style="font-size:17px;">Add your photos & videos</h2>
+      <p>Drop in everything from the trip. It'll quietly screen out the blurry shots and repeats before you see anything.</p>
+      <label class="drop" id="dropZone">
+        <div class="big">📷</div>
+        <div style="font-weight:600;">Tap to choose files</div>
+        <div style="font-size:12px; color:var(--ink-soft); margin-top:4px;">Photos and video clips, any amount</div>
+        <input type="file" id="fileInput" accept="image/*,video/*" multiple>
+      </label>
+      <button class="btn secondary" id="pickFolderBtn" type="button" style="margin-top:10px;">Or choose a whole folder at once</button>
+      <input type="file" id="folderInput" webkitdirectory multiple>
+      <p style="font-size:12px; margin-top:10px;">No fixed limit in this app — but Android's own photo picker caps how many you can select at once (usually around 100) and has no select-all. Tap "choose a whole folder" instead to grab everything in one go, no cap, no per-photo tapping.</p>
+    </div>
+  </div>
+
+  <!-- STEP 2: ANALYZING -->
+  <div class="step" id="step-analyze">
+    <div class="card">
+      <h2 style="font-size:17px;">Looking through everything…</h2>
+      <p id="analyzeStatus">Checking sharpness and finding repeats.</p>
+      <div class="progress-track"><div class="progress-fill" id="analyzeProgress"></div></div>
+    </div>
+  </div>
+
+  <!-- STEP 3: AUTO-FILTER REVIEW -->
+  <div class="step" id="step-filtered">
+    <div class="card">
+      <h2 style="font-size:17px;">Set aside automatically</h2>
+      <p id="filteredSummary"></p>
+      <div class="chip-grid" id="filteredChips"></div>
+      <button class="btn secondary" id="addMoreBtn" style="margin-top:14px;">Add more photos or videos</button>
+
+      <label class="field-label">Order</label>
+      <div class="pace-row">
+        <div class="pace-opt" data-sort="date">By date taken</div>
+        <div class="pace-opt" data-sort="selected">As I picked them</div>
+      </div>
+    </div>
+    <button class="btn" id="toSwipeBtn">Looks good — review the rest</button>
+    <button class="btn secondary" id="skipReviewBtn" style="margin-top:10px;">Skip reviewing — keep everything left</button>
+  </div>
+
+  <!-- STEP 4: SWIPE -->
+  <div class="step" id="step-swipe">
+    <div class="swipe-count" id="swipeCount"></div>
+    <div class="stack" id="stack"></div>
+    <div class="swipe-actions">
+      <button class="round-btn skip" id="skipBtn">✕</button>
+      <button class="round-btn keep" id="keepBtn">✓</button>
+    </div>
+    <p style="text-align:center; font-size:12px; margin-top:14px;">Swipe, or use the buttons — ✕ leaves it out, ✓ keeps it in the reel.</p>
+  </div>
+
+  <!-- STEP 4.5: CHOOSE OUTPUT -->
+  <div class="step" id="step-output-choice">
+    <div class="card">
+      <h2 style="font-size:17px;">Name your project</h2>
+      <input type="text" id="projectTitle" placeholder="e.g. Summer Trip 2026" value="My Trip">
+
+      <h2 style="font-size:17px; margin-top:10px;">What do you want to make?</h2>
+      <p id="choiceSummary"></p>
+
+      <button class="btn" id="chooseVideoBtn" style="margin-bottom:10px;">Video reel — for social media</button>
+      <button class="btn secondary" id="chooseGalleryBtn">Web gallery — a clickable page of photos</button>
+    </div>
+  </div>
+
+  <!-- GALLERY BUILD -->
+  <div class="step" id="step-gallery-build">
+    <div class="card">
+      <h2 style="font-size:17px;">Putting the gallery together…</h2>
+      <p id="galleryBuildStatus">Preparing images.</p>
+      <div class="progress-track"><div class="progress-fill" id="galleryProgress"></div></div>
+    </div>
+  </div>
+
+  <!-- GALLERY DONE -->
+  <div class="step" id="step-gallery-done">
+    <div class="card">
+      <h2 style="font-size:17px;">Gallery ready</h2>
+      <p id="galleryDoneNote">It's one self-contained page — save it, and anyone you send it to can open it and click through the photos, no app needed.</p>
+      <div class="btn-row">
+        <a class="btn" id="galleryDownloadBtn" download="gallery.html">Save gallery</a>
+        <button class="btn secondary" id="galleryPreviewBtn">Preview</button>
+      </div>
+      <button class="btn ghost" id="alsoMakeVideoBtn">Also make the video reel</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: CONFIGURE -->
+  <div class="step" id="step-configure">
+    <div class="card">
+      <h2 style="font-size:17px;">Shape the reel</h2>
+      <p id="keeperSummary"></p>
+
+      <label class="field-label">Pace</label>
+      <div class="pace-row">
+        <div class="pace-opt" data-pace="quick">Quick</div>
+        <div class="pace-opt selected" data-pace="medium">Medium</div>
+        <div class="pace-opt" data-pace="slow">Lingering</div>
+      </div>
+
+      <div class="estimate" id="estimateTime">—</div>
+      <div class="estimate-label">estimated length</div>
+
+      <label class="field-label">Music</label>
+      <div id="musicOptions"></div>
+      <p style="font-size:12px; margin-top:2px;">The "bundled" tracks only play if you've added the mp3 files to this project's <code>music/</code> folder — see the note below on where to get free ones.</p>
+
+      <label class="btn secondary" style="margin-top:10px; cursor:pointer;">
+        Choose an audio file from your phone (MP3/WAV)
+        <input type="file" id="customAudioInput" accept="audio/*">
+      </label>
+      <div id="customAudioLabel" style="font-size:12px; text-align:center; margin-top:8px; color:var(--ink-soft); font-weight:bold;"></div>
+    </div>
+    <button class="btn" id="renderBtn">Create the video</button>
+    <p class="footer-note">Want real instrumental tracks instead of silence or your own file? Download a couple from <strong>pixabay.com/music</strong> (free, no attribution needed) — rename them to match the files below and drop them in a <code>music</code> folder next to this HTML file in your project:<br>
+    <code>music/calm.mp3</code> · <code>music/upbeat.mp3</code> · <code>music/warm.mp3</code><br>
+    Once they're there, this picker will pick them up automatically.</p>
+  </div>
+
+  <!-- STEP 6: RENDERING -->
+  <div class="step" id="step-render">
+    <div class="card">
+      <h2 style="font-size:17px;">Building your reel…</h2>
+      <p id="renderStatus">This plays out in real time, so it takes about as long as the finished video.</p>
+      <div class="progress-track"><div class="progress-fill" id="renderProgress"></div></div>
+    </div>
+    <button class="btn secondary" id="cancelRenderBtn">Cancel — nothing is lost, your photos stay put</button>
+  </div>
+
+  <!-- STEP 7: DONE -->
+  <div class="step" id="step-done">
+    <div class="card">
+      <h2 style="font-size:17px;">Done</h2>
+      <p>Preview it below, then save it to your phone and share it wherever you like.</p>
+      <video id="previewPlayer" controls playsinline></video>
+      <div class="btn-row" style="margin-top:14px;">
+        <a class="btn" id="downloadBtn" download="reel.webm">Save video</a>
+      </div>
+      <button class="btn secondary" id="alsoMakeGalleryBtn" style="margin-top:10px;">Also make a web gallery</button>
+      <button class="btn ghost" id="startOverBtn">Start a new reel</button>
+    </div>
+    <p class="footer-note">Saved as .webm — Android and most social apps play and upload this fine. If a specific app rejects it, open it once in your phone's gallery app first, which usually fixes the format.</p>
+  </div>
+
+  <canvas id="renderCanvas" width="1080" height="1920"></canvas>
+  <audio id="previewAudio" style="display:none;"></audio>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  const state = {
+    items: [],
+    swipeQueue: [],
+    keepers: [],
+    pace: 'medium',
+    musicChoice: 'none',
+    customAudioFile: null,
+    audioCtx: null,
+    sortMode: 'date',
+    renderCancelled: false,
+  };
+  let idCounter = 0;
+
+  const $ = sel => document.querySelector(sel);
+  function showStep(id){
+    document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+    $('#'+id).classList.add('active');
+  }
+  function getSafeFilename(ext) {
+    const title = $('#projectTitle').value.trim() || 'reeler';
+    const safe = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    return `${safe}.${ext}`;
+  }
+
+  // ---------- local save, so a refresh or a stuck render doesn't wipe your work ----------
+  const DB_NAME = 'reeler-session', DB_VERSION = 1;
+  let dbPromise = null;
+  function openDB(){
+    if(dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve,reject)=>{
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = ()=>{
+        const db = req.result;
+        if(!db.objectStoreNames.contains('items')) db.createObjectStore('items', {keyPath:'id'});
+        if(!db.objectStoreNames.contains('meta')) db.createObjectStore('meta', {keyPath:'key'});
+      };
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    });
+    return dbPromise;
+  }
+  async function idbPutItem(record){
+    try{
+      const db = await openDB();
+      await new Promise((res,rej)=>{
+        const tx = db.transaction('items','readwrite');
+        tx.objectStore('items').put(record);
+        tx.oncomplete = res; tx.onerror = ()=>rej(tx.error);
+      });
+    }catch(e){ console.warn('Local save skipped (storage may be full):', e); }
+  }
+  async function idbGetAllItems(){
+    try{
+      const db = await openDB();
+      return await new Promise((res,rej)=>{
+        const tx = db.transaction('items','readonly');
+        const req = tx.objectStore('items').getAll();
+        req.onsuccess = ()=>res(req.result);
+        req.onerror = ()=>rej(req.error);
+      });
+    }catch(e){ return []; }
+  }
+  async function idbClearItems(){
+    try{
+      const db = await openDB();
+      await new Promise((res,rej)=>{
+        const tx = db.transaction('items','readwrite');
+        tx.objectStore('items').clear();
+        tx.oncomplete=res; tx.onerror=()=>rej(tx.error);
+      });
+    }catch(e){}
+  }
+  async function idbSetMeta(key, value){
+    try{
+      const db = await openDB();
+      await new Promise((res,rej)=>{
+        const tx = db.transaction('meta','readwrite');
+        tx.objectStore('meta').put({key, value});
+        tx.oncomplete=res; tx.onerror=()=>rej(tx.error);
+      });
+    }catch(e){}
+  }
+  async function idbGetMeta(key){
+    try{
+      const db = await openDB();
+      return await new Promise((res,rej)=>{
+        const tx = db.transaction('meta','readonly');
+        const req = tx.objectStore('meta').get(key);
+        req.onsuccess = ()=>res(req.result ? req.result.value : undefined);
+        req.onerror = ()=>rej(req.error);
+      });
+    }catch(e){ return undefined; }
+  }
+  function persistItem(item){
+    idbPutItem({
+      id: item.id,
+      file: item.file,
+      type: item.type,
+      status: item.status,
+      reason: item.reason || null,
+      sharpness: (item.sharpness!=null) ? item.sharpness : null,
+      hash: (item.hash!=null) ? item.hash.toString() : null,
+      dateTaken: item.dateTaken ? item.dateTaken.getTime() : null,
+      duration: item.duration || null,
+    });
+  }
+
+  // ---------- ordering: by date taken, or the order you picked them in ----------
+  function sortKeyFor(item){
+    if(state.sortMode === 'date'){
+      if(item.dateTaken instanceof Date) return item.dateTaken.getTime();
+      return item.file.lastModified || item.id;
+    }
+    return item.id;
+  }
+  function orderItems(list){
+    return [...list].sort((a,b)=> sortKeyFor(a) - sortKeyFor(b));
+  }
+  function dateOrder(list){
+    return [...list].sort((a,b)=>{
+      const ta = a.dateTaken instanceof Date ? a.dateTaken.getTime() : (a.file.lastModified||0);
+      const tb = b.dateTaken instanceof Date ? b.dateTaken.getTime() : (b.file.lastModified||0);
+      return ta - tb;
+    });
+  }
+  function applySortModeUI(){
+    document.querySelectorAll('[data-sort]').forEach(el=>{
+      el.classList.toggle('selected', el.dataset.sort === state.sortMode);
+    });
+  }
+  document.querySelectorAll('[data-sort]').forEach(opt=>{
+    opt.addEventListener('click', ()=>{
+      state.sortMode = opt.dataset.sort;
+      applySortModeUI();
+      idbSetMeta('sortMode', state.sortMode);
+    });
+  });
+  applySortModeUI();
+
+  // ---------- minimal EXIF read, just for the original date-taken ----------
+  function parseExif(buffer){
+    try{
+      const view = new DataView(buffer);
+      if(view.getUint16(0,false) !== 0xFFD8) return null;
+      let offset = 2;
+      const len = view.byteLength;
+      while(offset < len){
+        const marker = view.getUint16(offset,false);
+        if(marker === 0xFFE1){
+          const app1Length = view.getUint16(offset+2,false);
+          const tag = String.fromCharCode(view.getUint8(offset+4),view.getUint8(offset+5),view.getUint8(offset+6),view.getUint8(offset+7));
+          if(tag === 'Exif') return parseTiff(view, offset+10);
+          offset += 2 + app1Length;
+        } else if((marker & 0xFF00) !== 0xFF00){
+          break;
+        } else {
+          offset += 2 + view.getUint16(offset+2,false);
+        }
+      }
+    }catch(e){}
+    return null;
+  }
+  function parseTiff(view, tiffOffset){
+    const little = view.getUint16(tiffOffset,false) === 0x4949;
+    const u16 = o=>view.getUint16(o,little);
+    const u32 = o=>view.getUint32(o,little);
+    const result = {};
+    function readIFD(ifdOffset){
+      const entryCount = u16(tiffOffset+ifdOffset);
+      for(let i=0;i<entryCount;i++){
+        const entryOffset = tiffOffset+ifdOffset+2+i*12;
+        const t = u16(entryOffset), count = u32(entryOffset+4);
+        if((t===0x9003 || t===0x0132) && !result.dateTaken){
+          const strOffset = count<=4 ? entryOffset+8 : u32(entryOffset+8)+tiffOffset;
+          let str='';
+          for(let j=0;j<count-1;j++) str += String.fromCharCode(view.getUint8(strOffset+j));
+          result.dateTaken = str;
+        }
+      }
+    }
+    try{ readIFD(u32(tiffOffset+4)); }catch(e){}
+    return result;
+  }
+  async function extractDateTaken(file){
+    if(/jpe?g/i.test(file.type)){
+      try{
+        const buf = await file.arrayBuffer();
+        const exif = parseExif(buf);
+        if(exif && exif.dateTaken){
+          const m = exif.dateTaken.match(/(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+          if(m) return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]);
+          const m2 = exif.dateTaken.match(/(\d{4}):(\d{2}):(\d{2})/);
+          if(m2) return new Date(+m2[1], +m2[2]-1, +m2[3]);
+        }
+      }catch(e){}
+    }
+    return new Date(file.lastModified || Date.now());
+  }
+
+  // ---------- ingest (upload button, folder button, and "add more") ----------
+  $('#dropZone').addEventListener('click', e=>{});
+  $('#pickFolderBtn').addEventListener('click', ()=> $('#folderInput').click());
+  $('#addMoreBtn').addEventListener('click', ()=> $('#fileInput').click());
+
+  $('#fileInput').addEventListener('change', e=>{
+    ingestAndAnalyze(e.target.files);
+    e.target.value = '';
+  });
+  $('#folderInput').addEventListener('change', e=>{
+    ingestAndAnalyze(e.target.files);
+    e.target.value = '';
+  });
+
+  function ingestAndAnalyze(fileList){
+    const files = Array.from(fileList || []).filter(f => /^image\//.test(f.type) || /^video\//.test(f.type));
+    if(!files.length) return;
+    const newItems = files.map(f=>{
+      const type = f.type.startsWith('video') ? 'video' : 'image';
+      const item = { id: idCounter++, file: f, type, status:'pending' };
+      state.items.push(item);
+      persistItem(item);
+      return item;
+    });
+    showStep('step-analyze');
+    analyzeItems(newItems).then(classifyAutoFilter);
+  }
+
+
+  function loadImage(file){
+    return new Promise((resolve,reject)=>{
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = ()=> resolve({img,url});
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+  function loadVideoMeta(file){
+    return new Promise((resolve,reject)=>{
+      const url = URL.createObjectURL(file);
+      const v = document.createElement('video');
+      v.preload = 'metadata';
+      v.muted = true; v.playsInline = true;
+      v.onloadedmetadata = ()=>{
+        v.currentTime = Math.min(1, (v.duration||1)/2);
+      };
+      v.onseeked = ()=> resolve({video:v, url, duration:v.duration});
+      v.onerror = reject;
+      v.src = url;
+    });
+  }
+
+  function analyzeCanvasSource(source){
+    const size = 96;
+    const c = document.createElement('canvas'); c.width=size; c.height=size;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(source, 0, 0, size, size);
+    const data = ctx.getImageData(0,0,size,size).data;
+    const gray = new Float32Array(size*size);
+    for(let i=0;i<size*size;i++){
+      const r=data[i*4], g=data[i*4+1], b=data[i*4+2];
+      gray[i] = 0.299*r+0.587*g+0.114*b;
+    }
+    let sharp = 0;
+    for(let y=0;y<size-1;y++){
+      for(let x=0;x<size-1;x++){
+        const idx = y*size+x;
+        const dx = gray[idx] - gray[idx+1];
+        const dy = gray[idx] - gray[idx+size];
+        sharp += dx*dx + dy*dy;
+      }
+    }
+    sharp = sharp / (size*size);
+
+    const hSize = 8;
+    const hc = document.createElement('canvas'); hc.width=hSize; hc.height=hSize;
+    const hctx = hc.getContext('2d');
+    hctx.drawImage(source, 0, 0, hSize, hSize);
+    const hdata = hctx.getImageData(0,0,hSize,hSize).data;
+    let sum=0; const vals=[];
+    for(let i=0;i<hSize*hSize;i++){
+      const v = 0.299*hdata[i*4]+0.587*hdata[i*4+1]+0.114*hdata[i*4+2];
+      vals.push(v); sum+=v;
+    }
+    const avg = sum/vals.length;
+    let hash = 0n;
+    for(let i=0;i<vals.length;i++){ hash = (hash<<1n) | (vals[i] > avg ? 1n : 0n); }
+
+    return { sharpness: sharp, hash };
+  }
+
+  function hamming(a,b){
+    let x = a ^ b, count = 0n;
+    while(x){ count += x & 1n; x >>= 1n; }
+    return Number(count);
+  }
+
+  async function analyzeItems(items){
+    let done = 0;
+    for(const item of items){
+      try{
+        if(item.type === 'image'){
+          const {img,url} = await loadImage(item.file);
+          const {sharpness, hash} = analyzeCanvasSource(img);
+          item.sharpness = sharpness; item.hash = hash; item.thumbUrl = url; item.el = img;
+          item.dateTaken = await extractDateTaken(item.file);
+        } else {
+          const {video,url,duration} = await loadVideoMeta(item.file);
+          const {sharpness} = analyzeCanvasSource(video);
+          item.sharpness = sharpness; item.duration = duration || 4; item.thumbUrl = url; item.el = video;
+          item.dateTaken = new Date(item.file.lastModified || Date.now());
+        }
+      }catch(err){
+        item.sharpness = 999999; item.hash = 0n;
+        item.dateTaken = new Date(item.file.lastModified || Date.now());
+      }
+      persistItem(item);
+      done++;
+      $('#analyzeProgress').style.width = Math.round(done/items.length*100)+'%';
+      $('#analyzeStatus').textContent = `Checked ${done} of ${items.length}`;
+      await new Promise(r=>setTimeout(r,0));
+    }
+  }
+
+  function classifyAutoFilter(){
+    const images = state.items.filter(i=>i.type==='image');
+    const pendingImages = images.filter(i=>i.status==='pending');
+    const sharpVals = pendingImages.map(i=>i.sharpness).sort((a,b)=>a-b);
+    const median = sharpVals[Math.floor(sharpVals.length/2)] || 1;
+    const blurFloor = median * 0.35;
+
+    pendingImages.forEach(i=>{
+      if(i.sharpness < blurFloor){
+        i.status = 'auto-out'; i.reason = 'blurry';
+        persistItem(i);
+      }
+    });
+
+    const remaining = dateOrder(images.filter(i=>i.status==='pending'));
+    remaining.forEach((item, idx)=>{
+      if(item.status !== 'pending') return;
+      for(let j=idx+1;j<remaining.length;j++){
+        const other = remaining[j];
+        if(other.status !== 'pending') continue;
+        if(hamming(item.hash, other.hash) <= 6){
+          other.status = 'auto-out'; other.reason = 'similar to another shot';
+          persistItem(other);
+        }
+      }
+    });
+
+    renderFilteredStep();
+  }
+
+  function renderFilteredStep(){
+    const autoOut = state.items.filter(i=>i.status==='auto-out');
+    $('#filteredSummary').textContent = autoOut.length
+      ? `${autoOut.length} set aside as blurry or near-duplicates. Tap any to bring it back.`
+      : `Nothing looked blurry or repeated — everything moves on to review.`;
+    const grid = $('#filteredChips');
+    grid.innerHTML = '';
+    autoOut.forEach(item=>{
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.innerHTML = `<img src="${item.thumbUrl}"><div class="restore">restore</div>`;
+      chip.addEventListener('click', ()=>{
+        item.status = 'pending';
+        persistItem(item);
+        chip.remove();
+        $('#filteredSummary').textContent = `${state.items.filter(i=>i.status==='auto-out').length} set aside as blurry or near-duplicates.`;
+      });
+      grid.appendChild(chip);
+    });
+    showStep('step-filtered');
+  }
+
+  $('#skipReviewBtn').addEventListener('click', ()=>{
+    const remaining = state.items.filter(i=>i.status==='pending');
+    remaining.forEach(i=>{ i.status='kept'; persistItem(i); });
+    finishSwiping();
+  });
+
+  $('#toSwipeBtn').addEventListener('click', ()=>{
+    state.swipeQueue = orderItems(state.items.filter(i=>i.status==='pending'));
+    if(!state.swipeQueue.length){
+      state.keepers = [];
+      showConfigure();
+      return;
+    }
+    showStep('step-swipe');
+    renderSwipeStack();
+  });
+
+  function renderSwipeStack(){
+    const stack = $('#stack');
+    stack.innerHTML = '';
+    const visible = state.swipeQueue.slice(0,3).reverse();
+    visible.forEach((item, i)=>{
+      const el = document.createElement('div');
+      el.className = 'swipe-card';
+      const isTop = (i === visible.length-1);
+      el.style.zIndex = i;
+      el.style.transform = `scale(${1 - (visible.length-1-i)*0.03}) translateY(${(visible.length-1-i)*8}px)`;
+      if(item.type==='image'){
+        el.innerHTML = `<img src="${item.thumbUrl}"><div class="badge keep">KEEP</div><div class="badge skip">SKIP</div>`;
+      } else {
+        el.innerHTML = `<video src="${item.thumbUrl}" muted loop playsinline autoplay></video><div class="badge keep">KEEP</div><div class="badge skip">SKIP</div>`;
+      }
+      if(isTop) attachSwipeHandlers(el, item);
+      stack.appendChild(el);
+    });
+    $('#swipeCount').textContent = state.swipeQueue.length
+      ? `${state.swipeQueue.length} left to review`
+      : '';
+    if(!state.swipeQueue.length){
+      finishSwiping();
+    }
+  }
+
+  function attachSwipeHandlers(card, item){
+    let startX=0, startY=0, dx=0, dragging=false;
+    const badgeKeep = card.querySelector('.badge.keep');
+    const badgeSkip = card.querySelector('.badge.skip');
+
+    function onDown(x,y){ dragging=true; startX=x; startY=y; card.style.transition='none'; }
+    function onMove(x,y){
+      if(!dragging) return;
+      dx = x - startX;
+      const dy = (y - startY)*0.4;
+      card.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx*0.04}deg)`;
+      const op = Math.min(Math.abs(dx)/80, 1);
+      if(dx>0){ badgeKeep.style.opacity=op; badgeSkip.style.opacity=0; }
+      else { badgeSkip.style.opacity=op; badgeKeep.style.opacity=0; }
+    }
+    function onUp(){
+      if(!dragging) return;
+      dragging=false;
+      card.style.transition='transform 0.25s ease, opacity 0.25s ease';
+      if(dx > 90){ decide(true); }
+      else if(dx < -90){ decide(false); }
+      else { card.style.transform=''; badgeKeep.style.opacity=0; badgeSkip.style.opacity=0; }
+    }
+    function decide(keep){
+      card.style.transform = `translate(${keep?600:-600}px, -40px) rotate(${keep?25:-25}deg)`;
+      card.style.opacity = '0';
+      applyDecision(item, keep);
+      setTimeout(renderSwipeStack, 180);
+    }
+
+    card.addEventListener('pointerdown', e=>onDown(e.clientX,e.clientY));
+    card.addEventListener('pointermove', e=>onMove(e.clientX,e.clientY));
+    card.addEventListener('pointerup', onUp);
+    card.addEventListener('pointercancel', onUp);
+    card._decide = decide; 
+  }
+
+  function applyDecision(item, keep){
+    item.status = keep ? 'kept' : 'skipped';
+    persistItem(item);
+    state.swipeQueue = state.swipeQueue.filter(i=>i.id!==item.id);
+  }
+
+  $('#keepBtn').addEventListener('click', ()=>{
+    const top = $('#stack').lastElementChild;
+    if(top && top._decide) top._decide(true);
+  });
+  $('#skipBtn').addEventListener('click', ()=>{
+    const top = $('#stack').lastElementChild;
+    if(top && top._decide) top._decide(false);
+  });
+
+  function finishSwiping(){
+    state.keepers = orderItems(state.items.filter(i=>i.status==='kept'));
+    showOutputChoice();
+  }
+
+  function showOutputChoice(){
+    const n = state.keepers.length;
+    const imgCount = state.keepers.filter(i=>i.type==='image').length;
+    const vidCount = state.keepers.filter(i=>i.type==='video').length;
+    $('#choiceSummary').textContent = n
+      ? `You kept ${imgCount} photo${imgCount!==1?'s':''}${vidCount?` and ${vidCount} video${vidCount!==1?'s':''}`:''}. You can make either one, or both — nothing here is used up by making one.`
+      : `Nothing was kept — go back and swipe right on a few, or upload more.`;
+    showStep('step-output-choice');
+  }
+  $('#chooseVideoBtn').addEventListener('click', showConfigure);
+  $('#chooseGalleryBtn').addEventListener('click', buildGallery);
+  $('#alsoMakeGalleryBtn').addEventListener('click', buildGallery);
+  $('#alsoMakeVideoBtn').addEventListener('click', showConfigure);
+
+  // ---------- music: bundled (self-hosted) tracks + custom upload + none ----------
+  const bundledTracks = [
+    {id:'calm',    name:'Calm / Reflective',      file:'music/calm.mp3'},
+    {id:'upbeat',  name:'Upbeat / Walking pace',  file:'music/upbeat.mp3'},
+    {id:'warm',    name:'Warm / Nostalgic',       file:'music/warm.mp3'},
+  ];
+  const musicTracks = [
+    {id:'none', name:'No backing music', desc:'just your video/photo audio'},
+    ...bundledTracks.map(t=>({id:t.id, name:t.name, desc:'from your music/ folder', file:t.file})),
+  ];
+
+  async function checkTrackAvailable(file){
+    try{
+      const res = await fetch(file, {method:'HEAD'});
+      return res.ok;
+    }catch(e){ return false; }
+  }
+
+  // ---------- preview playback (separate from the render-time audio graph) ----------
+  let previewPlayingId = null;
+  function togglePreview(id, src){
+    const audio = $('#previewAudio');
+    const btn = document.querySelector(`.play-mini[data-preview-id="${id}"]`);
+    if(previewPlayingId === id && !audio.paused){
+      audio.pause();
+      if(btn) btn.textContent = '▶';
+      previewPlayingId = null;
+      return;
+    }
+    document.querySelectorAll('.play-mini').forEach(b=>b.textContent='▶');
+    audio.pause();
+    audio.src = src;
+    audio.currentTime = 0;
+    audio.play().catch(()=>{
+      if(btn) btn.textContent = '▶';
+      previewPlayingId = null;
+    });
+    previewPlayingId = id;
+    if(btn) btn.textContent = '⏸';
+    audio.onended = ()=>{ if(btn) btn.textContent = '▶'; previewPlayingId = null; };
+    audio.onerror = ()=>{ if(btn) btn.textContent = '▶'; previewPlayingId = null; };
+  }
+  function stopPreview(){
+    const audio = $('#previewAudio');
+    audio.pause();
+    document.querySelectorAll('.play-mini').forEach(b=>b.textContent='▶');
+    previewPlayingId = null;
+  }
+
+  $('#customAudioInput').addEventListener('change', e=>{
+    if(e.target.files.length > 0){
+      state.customAudioFile = e.target.files[0];
+      state.musicChoice = 'custom';
+      document.querySelectorAll('.music-opt').forEach(o=>o.classList.remove('selected'));
+      const url = URL.createObjectURL(state.customAudioFile);
+      $('#customAudioLabel').innerHTML = `Loaded: ${state.customAudioFile.name} <button type="button" class="play-mini" data-preview-id="custom-upload" style="margin-left:6px; vertical-align:middle;">▶</button>`;
+      $('#customAudioLabel').querySelector('.play-mini').addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        togglePreview('custom-upload', url);
+      });
+    }
+  });
+
+  function showConfigure(){
+    stopPreview();
+    const n = state.keepers.length;
+    const imgCount = state.keepers.filter(i=>i.type==='image').length;
+    const vidCount = state.keepers.filter(i=>i.type==='video').length;
+    $('#keeperSummary').textContent = n
+      ? `You kept ${imgCount} photo${imgCount!==1?'s':''}${vidCount?` and ${vidCount} video${vidCount!==1?'s':''}`:''}.`
+      : `Nothing was kept — go back and swipe right on a few, or upload more.`;
+
+    const musicDiv = $('#musicOptions');
+    musicDiv.innerHTML = '';
+    musicTracks.forEach(t=>{
+      const opt = document.createElement('div');
+      opt.className = 'music-opt' + (state.musicChoice===t.id ? ' selected':'');
+      const statusHtml = t.file ? `<span class="status" id="status-${t.id}">checking…</span>` : '';
+      const previewHtml = t.file ? `<button type="button" class="play-mini" data-preview-id="${t.id}" style="margin-right:8px;">▶</button>` : '';
+      opt.innerHTML = `<div style="display:flex; align-items:center;">${previewHtml}<div><div style="font-weight:600;">${t.name}</div><div style="font-size:12px;color:var(--ink-soft);">${t.desc}</div></div></div>${statusHtml}`;
+      opt.addEventListener('click', (e)=>{
+        state.musicChoice = t.id;
+        state.customAudioFile = null;
+        $('#customAudioInput').value = '';
+        $('#customAudioLabel').textContent = '';
+        document.querySelectorAll('.music-opt').forEach(o=>o.classList.remove('selected'));
+        opt.classList.add('selected');
+      });
+      const previewBtn = opt.querySelector('.play-mini');
+      if(previewBtn){
+        previewBtn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          togglePreview(t.id, t.file);
+        });
+      }
+      musicDiv.appendChild(opt);
+
+      if(t.file){
+        checkTrackAvailable(t.file).then(ok=>{
+          const el = document.getElementById(`status-${t.id}`);
+          if(!el) return;
+          el.textContent = ok ? 'ready' : 'not added yet';
+          el.className = 'status ' + (ok ? 'ok' : 'missing');
+        });
+      }
+    });
+
+    updateEstimate();
+    showStep('step-configure');
+  }
+
+  document.querySelectorAll('.pace-opt').forEach(opt=>{
+    opt.addEventListener('click', ()=>{
+      document.querySelectorAll('.pace-opt').forEach(o=>o.classList.remove('selected'));
+      opt.classList.add('selected');
+      state.pace = opt.dataset.pace;
+      updateEstimate();
+    });
+  });
+
+  function paceSettings(){
+    if(state.pace==='quick') return {photoSec:1.5, videoCap:2.5};
+    if(state.pace==='slow') return {photoSec:4, videoCap:7};
+    return {photoSec:2.5, videoCap:4.5};
+  }
+
+  function estimateTotalSeconds(){
+    const {photoSec, videoCap} = paceSettings();
+    let total = 0;
+    state.keepers.forEach(i=>{
+      if(i.type==='image') total += photoSec;
+      else total += Math.min(i.duration||videoCap, videoCap);
+    });
+    return total;
+  }
+
+  function updateEstimate(){
+    const total = estimateTotalSeconds();
+    const mm = Math.floor(total/60), ss = Math.round(total%60);
+    $('#estimateTime').textContent = mm>0 ? `${mm}m ${ss}s` : `${ss}s`;
+  }
+
+  async function buildMusic(ctx, destination, totalSeconds, choice, customFile){
+    if(choice === 'none') return {stop:()=>{}};
+    const master = ctx.createGain();
+    master.gain.value = 0.5;
+    master.connect(destination);
+
+    try{
+      let arrayBuffer;
+      if(choice === 'custom' && customFile){
+        arrayBuffer = await customFile.arrayBuffer();
+      } else {
+        const track = bundledTracks.find(t=>t.id===choice);
+        if(!track) return {stop:()=>{}};
+        const res = await fetch(track.file);
+        if(!res.ok) throw new Error('track file not found: ' + track.file);
+        arrayBuffer = await res.arrayBuffer();
+      }
+      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.loop = true; // loops automatically if the track is shorter than the video
+      source.connect(master);
+      source.start(ctx.currentTime);
+      return { stop: ()=>{ try{ source.stop(); master.disconnect(); }catch(e){} } };
+    }catch(e){
+      console.error('Music failed to load, continuing without it:', e);
+      return {stop:()=>{}};
+    }
+  }
+
+  $('#renderBtn').addEventListener('click', ()=>{ stopPreview(); renderVideo(); });
+  $('#cancelRenderBtn').addEventListener('click', ()=>{
+    state.renderCancelled = true;
+    showConfigure();
+  });
+
+  async function renderVideo(){
+    if(!state.keepers.length){ showConfigure(); return; }
+    showStep('step-render');
+    $('#renderProgress').style.width='0%';
+    state.renderCancelled = false;
+
+    const canvas = $('#renderCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    const {photoSec, videoCap} = paceSettings();
+    const segments = state.keepers.map(item=>{
+      if(item.type==='image') return {item, type:'image', duration: photoSec};
+      return {item, type:'video', duration: Math.min(item.duration||videoCap, videoCap)};
+    });
+    const totalDuration = segments.reduce((s,seg)=>s+seg.duration,0);
+
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioCtx();
+    const dest = audioCtx.createMediaStreamDestination();
+    const music = await buildMusic(audioCtx, dest, totalDuration, state.musicChoice, state.customAudioFile);
+
+    const canvasStream = canvas.captureStream(30);
+    const combined = new MediaStream([
+      ...canvasStream.getVideoTracks(),
+      ...dest.stream.getAudioTracks(),
+    ]);
+
+    let mimeType = 'video/webm;codecs=vp9,opus';
+    if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm;codecs=vp8,opus';
+    if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+
+    const recorder = new MediaRecorder(combined, {mimeType});
+    const chunks = [];
+    recorder.ondataavailable = e=>{ if(e.data.size) chunks.push(e.data); };
+
+    const finished = new Promise(resolve=>{
+      recorder.onstop = ()=>{
+        const blob = new Blob(chunks, {type:'video/webm'});
+        resolve(blob);
+      };
+    });
+
+    recorder.start(1000); // Forces data packets to write out cleanly so duration isn't stuck at 0:00
+
+    const KENBURNS_MAX = 1.12;
+    const CROSSFADE = 0.4; 
+
+    function drawImageCover(image, x, y, w, h, zoom, panX, panY){
+      const iw = image.videoWidth||image.naturalWidth||image.width;
+      const ih = image.videoHeight||image.naturalHeight||image.height;
+      const scale = Math.max(w/iw, h/ih) * zoom;
+      const dw = iw*scale, dh = ih*scale;
+      const dx = x + (w-dw)/2 + panX;
+      const dy = y + (h-dh)/2 + panY;
+      ctx.drawImage(image, dx, dy, dw, dh);
+    }
+
+    let prevSnapshot = null;
+
+    async function playSegment(seg, segIndex){
+      const start = performance.now();
+      const durMs = seg.duration*1000;
+      const zoomIn = segIndex % 2 === 0;
+
+      if(seg.type==='video'){
+        seg.item.el.currentTime = 0;
+        seg.item.el.muted = true;
+        try{ await seg.item.el.play(); }catch(e){}
+      }
+
+      return new Promise(resolve=>{
+        function frame(now){
+          if(state.renderCancelled){ resolve(); return; }
+          const elapsed = now - start;
+          const p = Math.min(elapsed/durMs, 1);
+          ctx.fillStyle = '#111';
+          ctx.fillRect(0,0,W,H);
+
+          const zoom = zoomIn ? 1 + p*(KENBURNS_MAX-1) : KENBURNS_MAX - p*(KENBURNS_MAX-1);
+          const pan = (p-0.5) * 40;
+
+          if(seg.type==='image'){
+            drawImageCover(seg.item.el, 0,0,W,H, zoom, pan, 0);
+          } else {
+            drawImageCover(seg.item.el, 0,0,W,H, 1, 0, 0);
+          }
+
+          if(prevSnapshot && elapsed < CROSSFADE*1000){
+            const fadeP = elapsed/(CROSSFADE*1000);
+            ctx.globalAlpha = 1 - fadeP;
+            ctx.drawImage(prevSnapshot, 0, 0);
+            ctx.globalAlpha = 1;
+          }
+
+          if(p >= 1){
+            const snap = document.createElement('canvas');
+            snap.width = W; snap.height = H;
+            snap.getContext('2d').drawImage(canvas, 0, 0);
+            prevSnapshot = snap;
+            if(seg.type==='video') seg.item.el.pause();
+            resolve();
+            return;
+          }
+          requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+
+    let elapsedTotal = 0;
+    for(let i=0;i<segments.length;i++){
+      if(state.renderCancelled) break;
+      await playSegment(segments[i], i);
+      if(state.renderCancelled) break;
+      elapsedTotal += segments[i].duration;
+      $('#renderProgress').style.width = Math.round(elapsedTotal/totalDuration*100)+'%';
+      $('#renderStatus').textContent = `Rendering… ${Math.round(elapsedTotal)}s of ${Math.round(totalDuration)}s`;
+    }
+
+    if(state.renderCancelled){
+      try{ recorder.stop(); }catch(e){}
+      try{ music.stop(); }catch(e){}
+      try{ audioCtx.close(); }catch(e){}
+      return;
+    }
+
+    music.stop();
+    recorder.stop();
+    audioCtx.close();
+
+    const blob = await finished;
+    const url = URL.createObjectURL(blob);
+    $('#previewPlayer').src = url;
+    
+    $('#downloadBtn').download = getSafeFilename('webm');
+    $('#downloadBtn').href = url;
+    showStep('step-done');
+  }
+
+  function fileToDataURL(file){
+    return new Promise((resolve,reject)=>{
+      const r = new FileReader();
+      r.onload = ()=>resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function compressImageToDataURL(imgEl, maxDim, quality){
+    const iw = imgEl.naturalWidth||imgEl.width, ih = imgEl.naturalHeight||imgEl.height;
+    const scale = Math.min(1, maxDim/Math.max(iw,ih));
+    const c = document.createElement('canvas');
+    c.width = Math.round(iw*scale); c.height = Math.round(ih*scale);
+    c.getContext('2d').drawImage(imgEl, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', quality);
+  }
+
+  function videoPosterDataURL(videoEl, maxDim){
+    const iw = videoEl.videoWidth||640, ih = videoEl.videoHeight||360;
+    const scale = Math.min(1, maxDim/Math.max(iw,ih));
+    const c = document.createElement('canvas');
+    c.width = Math.round(iw*scale); c.height = Math.round(ih*scale);
+    c.getContext('2d').drawImage(videoEl, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.75);
+  }
+
+  async function buildGallery(){
+    if(!state.keepers.length){ showOutputChoice(); return; }
+    showStep('step-gallery-build');
+    $('#galleryProgress').style.width='0%';
+
+    const videoCount = state.keepers.filter(i=>i.type==='video').length;
+    if(videoCount > 8){
+      $('#galleryBuildStatus').textContent = `Preparing images and ${videoCount} videos — with this many videos the saved file will be large and slow to send. Photos only would keep it light.`;
+    }
+
+    const cells = [];
+    let done = 0;
+    
+    for(const item of state.keepers){
+      if(item.type === 'image'){
+        const full = compressImageToDataURL(item.el, 1600, 0.82);
+        const thumb = compressImageToDataURL(item.el, 480, 0.7);
+        cells.push({type:'image', full, thumb});
+      } else {
+        const poster = videoPosterDataURL(item.el, 480);
+        let videoData = null;
+        try{ videoData = await fileToDataURL(item.file); }catch(e){ }
+        cells.push({type:'video', poster, videoData, mime:item.file.type||'video/mp4'});
+      }
+      done++;
+      $('#galleryProgress').style.width = Math.round(done/state.keepers.length*100)+'%';
+      if(videoCount <= 8) $('#galleryBuildStatus').textContent = `Preparing ${done} of ${state.keepers.length}`;
+      await new Promise(r=>setTimeout(r,0));
+    }
+    
+    const projectTitle = $('#projectTitle').value.trim() || 'My Trip Gallery';
+    const html = buildGalleryHTML(cells, projectTitle);
+    const blob = new Blob([html], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    
+    $('#galleryDownloadBtn').download = getSafeFilename('html');
+    $('#galleryDownloadBtn').href = url;
+    $('#galleryPreviewBtn').onclick = ()=> window.open(url, '_blank');
+    showStep('step-gallery-done');
+  }
+
+  function buildGalleryHTML(cells, title){
+    const gridItems = cells.map((c,i)=>{
+      if(c.type==='image'){
+        return `<div class="g-cell" onclick="openLightbox(${i})"><img loading="lazy" src="${c.thumb}"></div>`;
+      } else {
+        return `<div class="g-cell" onclick="openLightbox(${i})"><img loading="lazy" src="${c.poster}"><div class="g-play">▶</div></div>`;
+      }
+    }).join('\n');
+
+    const lightboxData = cells.map(c=>{
+      if(c.type==='image') return {type:'image', src:c.full};
+      return {type:'video', src:c.videoData, mime:c.mime, poster:c.poster};
+    });
+
+    return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title}</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; background:#eee3ce; font-family:'Inter',sans-serif; color:#3a2f24; touch-action: pan-y pinch-zoom;}
+  h1{font-family:'Fraunces',serif; font-size:22px; text-align:center; padding:24px 16px 4px;}
+  .sub{text-align:center; color:#6b5c48; font-size:13px; padding-bottom:18px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:6px; padding:0 8px 40px;}
+  .g-cell{position:relative; aspect-ratio:1; overflow:hidden; border-radius:8px; cursor:pointer; background:#111;}
+  .g-cell img{width:100%; height:100%; object-fit:cover; display:block;}
+  .g-play{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; background:rgba(0,0,0,0.15);}
+  #lightbox{position:fixed; inset:0; background:rgba(15,12,10,0.98); display:none; align-items:center; justify-content:center; z-index:10; flex-direction:column;}
+  #lightbox.open{display:flex;}
+  #lightbox img, #lightbox video{max-width:100vw; max-height:100vh; border-radius:0; object-fit:contain; width:100%; height:100%;}
+  .lb-close{position:absolute; top:20px; right:20px; color:#fff; font-size:28px; font-weight:bold; cursor:pointer; z-index:20; background:rgba(0,0,0,0.3); width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:50%;}
+</style></head>
+<body>
+<h1>${title}</h1>
+<div class="sub">${cells.length} moments — tap any to open</div>
+<div class="grid">${gridItems}</div>
+
+<div id="lightbox">
+  <div class="lb-close" onclick="closeLightbox()">✕</div>
+  <div id="lbContent" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
+</div>
+
+<script>
+  const data = ${JSON.stringify(lightboxData)};
+  let idx = 0;
+  let startX = 0;
+
+  function openLightbox(i){
+    idx = i;
+    renderLB();
+    document.getElementById('lightbox').classList.add('open');
+  }
+  
+  function closeLightbox(){ 
+    document.getElementById('lightbox').classList.remove('open'); 
+    document.getElementById('lbContent').innerHTML = '';
+  }
+  
+  function navLightbox(dir){ 
+    idx = (idx + dir + data.length) % data.length; 
+    renderLB(); 
+  }
+  
+  function renderLB(){
+    const item = data[idx];
+    const el = document.getElementById('lbContent');
+    if(item.type==='image'){
+      el.innerHTML = '<img src="'+item.src+'">';
+    } else {
+      el.innerHTML = item.src ? '<video src="'+item.src+'" poster="'+item.poster+'" controls playsinline autoplay loop></video>' : '<img src="'+item.poster+'">';
+    }
+  }
+
+  const lb = document.getElementById('lightbox');
+  lb.addEventListener('touchstart', e => { 
+    startX = e.touches[0].clientX; 
+  });
+  lb.addEventListener('touchend', e => {
+    const endX = e.changedTouches[0].clientX;
+    const diff = startX - endX;
+    if(diff > 60) navLightbox(1);
+    else if(diff < -60) navLightbox(-1);
+  });
+<\/script>
+</body></html>`;
+  }
+
+  $('#startOverBtn').addEventListener('click', async ()=>{
+    await idbClearItems();
+    location.reload();
+  });
+
+  // ---------- resume a session that didn't get to finish ----------
+  async function resumeSession(records){
+    showStep('step-analyze');
+    $('#analyzeStatus').textContent = 'Loading your saved photos back in…';
+    $('#analyzeProgress').style.width = '0%';
+    let done = 0;
+    for(const rec of records){
+      const item = {
+        id: rec.id, file: rec.file, type: rec.type, status: rec.status,
+        reason: rec.reason, sharpness: rec.sharpness,
+        hash: (rec.hash!=null) ? BigInt(rec.hash) : undefined,
+        dateTaken: rec.dateTaken ? new Date(rec.dateTaken) : null,
+        duration: rec.duration || undefined,
+      };
+      try{
+        if(item.type === 'image'){
+          const {img,url} = await loadImage(item.file);
+          item.el = img; item.thumbUrl = url;
+        } else {
+          const {video,url} = await loadVideoMeta(item.file);
+          item.el = video; item.thumbUrl = url;
+        }
+        state.items.push(item);
+        idCounter = Math.max(idCounter, item.id + 1);
+      }catch(e){ /* couldn't reload this one, skip it */ }
+      done++;
+      $('#analyzeProgress').style.width = Math.round(done/records.length*100)+'%';
+      $('#analyzeStatus').textContent = `Loaded ${done} of ${records.length}`;
+      await new Promise(r=>setTimeout(r,0));
+    }
+
+    const savedSort = await idbGetMeta('sortMode');
+    if(savedSort){ state.sortMode = savedSort; applySortModeUI(); }
+
+    const anyDecided = state.items.some(i=>i.status==='kept' || i.status==='skipped');
+    if(anyDecided){
+      state.swipeQueue = orderItems(state.items.filter(i=>i.status==='pending'));
+      if(state.swipeQueue.length){
+        showStep('step-swipe');
+        renderSwipeStack();
+      } else {
+        finishSwiping();
+      }
+    } else {
+      renderFilteredStep();
+    }
+  }
+
+  async function checkForResume(){
+    const records = await idbGetAllItems();
+    if(!records.length) return;
+    const photoCount = records.filter(r=>r.type==='image').length;
+    const videoCount = records.filter(r=>r.type==='video').length;
+    $('#resumeSummary').textContent = `${photoCount} photo${photoCount!==1?'s':''}${videoCount?` and ${videoCount} video${videoCount!==1?'s':''}`:''} saved from a session that didn't finish.`;
+    showStep('step-resume');
+    $('#resumeBtn').onclick = ()=> resumeSession(records);
+    $('#discardResumeBtn').onclick = async ()=>{
+      await idbClearItems();
+      showStep('step-upload');
+    };
+  }
+  checkForResume();
+
+})();
+</script>
+</body>
+</html>
